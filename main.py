@@ -1,9 +1,11 @@
 import numpy as np
 import argparse
+import torch.utils
 import tqdm
 import random
 import logging
 from tqdm import tqdm
+import os
 
 import torch
 import torch.nn as nn
@@ -27,10 +29,9 @@ from ignite.utils import convert_tensor
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from timm.models.registry import register_model
 
-from utils.dataloader import dataload
+from utils.make_dataloader import get_loaders
 from src.swin_vit import SwinTransformer
 from utils.scheduler import build_scheduler  
-from utils.dataloader import datainfo
 from utils.optimizer import get_adam_optimizer
 from utils.utils import clip_gradients
 from utils.utils import save_checkpoint
@@ -129,11 +130,9 @@ class Trainer:
 
 
 def main():
-    parser = argparse.ArgumentParser('SWIN ViT for CIFAR-10', add_help=False)
-    parser.add_argument('--dir', type=str, default='./data',
+    parser = argparse.ArgumentParser('SWIN ViT for VisualSudoku', add_help=False)
+    parser.add_argument('--dir', type=str, default='/content/drive/MyDrive/Colab Notebooks/',
                     help='Data directory')
-    parser.add_argument('--num_classes', type=int, default=10, choices=[10, 100, 1000],
-                    help='Dataset name')
 
     # Model parameters
     parser.add_argument('--patch_size', default=2, type=int, help="""Size in pixels of input square patches - default 4 (for 4x4 patches) """)
@@ -181,7 +180,7 @@ def main():
                     help='Gamma value for Cosine LR schedule')
 
     # Misc
-    parser.add_argument('--dataset', default='CIFAR10', type=str, choices=['CIFAR10', 'CIFAR100'], help='Please specify path to the training data.')
+    parser.add_argument('--dataset_path', default='VisualSudoku', type=str, help='Please specify path to the training data.')
     parser.add_argument('--seed', default=42, type=int, help='Random seed.')
     parser.add_argument('--num_workers', default=8, type=int, help='Number of data loading workers per GPU.')
     parser.add_argument("--mlp_head_in", default=192, type=int, help="input dimension going inside MLP projection head")
@@ -208,18 +207,12 @@ def main():
     else:
         print("Model is using CPU")
 
-    print("\n--- Downloading Data ---\n")
+    train_loader, val_loader, test_loader, n_classes = get_loaders(batch_size= args.batch_size, num_workers=1, path= os.path.join(args.dir, args.dataset_path))
+    print("\n ---Dataloaders succusfully created--- \n")
 
-    data_info = datainfo(args)
-    train_dataset, val_dataset = dataload(args, data_info)
-
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
-                                                num_workers=args.num_workers, pin_memory=True)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False,
-                                                num_workers=args.num_workers, pin_memory=True)
 
     model = SwinTransformer(img_size=args.image_size,
-                        num_classes=args.num_classes,
+                        num_classes=n_classes,
                         window_size=4, 
                         patch_size=args.patch_size, 
                         embed_dim=96, 
@@ -229,8 +222,7 @@ def main():
                         qkv_bias=True, 
                         drop_path_rate=args.drop_path_rate).to(device)
 
-    # loss = LabelSmoothingCrossEntropy()
-    loss = nn.CrossEntropyLoss(label_smoothing=0.1)
+    loss = nn.CrossEntropyLoss()
     optimizer = get_adam_optimizer(model.parameters(), lr=args.lr, wd=args.weight_decay)
     lr_scheduler = build_scheduler(args, optimizer)
 
