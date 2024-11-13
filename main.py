@@ -164,7 +164,7 @@ def main():
     # Training/Optimization parameters
     parser.add_argument('--weight_decay', type=float, default=1e-1, help="""Initial value of the
         weight decay. With ViT, a smaller value at the beginning of training works well.""")
-    parser.add_argument('--batch_size', default=128, type=int,
+    parser.add_argument('--batch_size', default=10, type=int,
         help='Per-GPU batch-size : number of distinct images loaded on one GPU.')
     parser.add_argument('--epochs', default=200, type=int, help='Number of epochs of training.')
     parser.add_argument("--lr", default=0.001, type=float, help="""Learning rate at the end of
