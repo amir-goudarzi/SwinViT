@@ -9,12 +9,12 @@ import os
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-from torch.optim.lr_scheduler import _LRScheduler
+# import torch.optim as optim
+# import torch.nn.functional as F
+# from torch.optim.lr_scheduler import _LRScheduler
 # import torchvision
-from torchvision import datasets, transforms
-from torch.optim import AdamW, Adam
+# from torchvision import datasets, transforms
+# from torch.optim import AdamW, Adam
 from torch.cuda.amp import autocast, GradScaler
 
 # from einops import rearrange, repeat
@@ -64,18 +64,22 @@ class Trainer:
         best_accuracy = 0.0
 
         for epoch in range(self.args.epochs):
-            epoch_progress_bar = tqdm(total=len(self.train_loader) + len(self.val_loader), desc=f"Epoch {epoch + 1}/{self.args.epochs}")
+            epoch_progress_bar = tqdm(desc=f"Epoch {epoch + 1}/{self.args.epochs}", unit="batch")
 
             # Training Phase
             self.model.train()
-            total_train_loss, total_train_correct = 0.0, 0
+            total_train_loss, total_train_correct, total_train_samples = 0.0, 0, 0
             for batch in self.train_loader:
-                images, labels = self.cutmix.prepare_batch(batch, self.device, non_blocking=True)
+                # images, labels = self.cutmix.prepare_batch(batch, self.device, non_blocking=True)
                 self.optimizer.zero_grad()
+                x, _, sudoku_label = batch
+                x, sudoku_label = x.to(self.device), sudoku_label.to(self.device)
+                outputs = self.model(x)
+                loss.backward()
 
                 with autocast():
                     outputs = self.model(images)
-                    loss = self.cutmix(outputs, labels)
+                    loss = self.cutmix(outputs, sudoku_label)
 
                 self.scaler.scale(loss).backward()
 
@@ -88,29 +92,31 @@ class Trainer:
 
                 total_train_loss += loss.item()
                 _, predicted = torch.max(outputs.data, 1)
-                total_train_correct += (predicted == labels).sum().item()
+                total_train_correct += (predicted == sudoku_label).sum().item()
+                total_train_samples += x.shape[0]
 
                 epoch_progress_bar.update(1)
 
-            avg_train_loss = total_train_loss / len(self.train_loader)
-            train_accuracy = total_train_correct / len(self.train_loader.dataset)
+            avg_train_loss = total_train_loss / total_train_samples
+            train_accuracy = total_train_correct / total_train_samples
 
             # Validation Phase
             self.model.eval()
-            total_val_loss, total_val_correct = 0.0, 0
+            total_val_loss, total_val_correct, total_val_samples = 0.0, 0, 0
             with torch.no_grad():
-                for images, labels in self.val_loader:
-                    images, labels = images.to(self.device), labels.to(self.device)
+                for images, _, sudoku_label in self.val_loader:
+                    images, sudoku_label = images.to(self.device), sudoku_label.to(self.device)
                     outputs = self.model(images)
-                    loss = self.loss_fn(outputs, labels)
+                    loss = self.loss_fn(outputs, sudoku_label)
                     total_val_loss += loss.item()
                     _, predicted = torch.max(outputs.data, 1)
-                    total_val_correct += (predicted == labels).sum().item()
+                    total_val_correct += (predicted == sudoku_label).sum().item()
+                    total_val_samples += images.shape[0]
 
                     epoch_progress_bar.update(1)
 
-            avg_val_loss = total_val_loss / len(self.val_loader)
-            val_accuracy = total_val_correct / len(self.val_loader.dataset)
+            avg_val_loss = total_val_loss / total_val_samples
+            val_accuracy = total_val_correct / total_val_samples
             current_lr = self.optimizer.param_groups[0]['lr']
 
             epoch_progress_bar.set_postfix({"Train Loss": avg_train_loss, "Train Acc": train_accuracy, "Val Loss": avg_val_loss, "Val Acc": val_accuracy, "LR": current_lr})
