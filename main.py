@@ -12,22 +12,22 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import _LRScheduler
-import torchvision
+# import torchvision
 from torchvision import datasets, transforms
 from torch.optim import AdamW, Adam
 from torch.cuda.amp import autocast, GradScaler
 
-from einops import rearrange, repeat
-from einops.layers.torch import Rearrange
+# from einops import rearrange, repeat
+# from einops.layers.torch import Rearrange
 
-from functools import partial
+# from functools import partial
 
-from PIL import ImageFilter, ImageOps, Image
+# from PIL import ImageFilter, ImageOps, Image
 
-from ignite.utils import convert_tensor
+# from ignite.utils import convert_tensor
 
-from timm.models.layers import DropPath, to_2tuple, trunc_normal_
-from timm.models.registry import register_model
+# from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+# from timm.models.registry import register_model
 
 from utils.make_dataloader import get_loaders
 from src.swin_vit import SwinTransformer
