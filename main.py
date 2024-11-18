@@ -143,7 +143,7 @@ def main():
     # Model parameters
     parser.add_argument('--patch_size', default=2, type=int, help="""Size in pixels of input square patches - default 4 (for 4x4 patches) """)
     parser.add_argument('--out_dim', default=1024, type=int, help="""Dimensionality of the SSL MLP head output. For complex and large datasets large values (like 65k) work well.""")
-
+    parser.add_argument('--grid_size', default=4, type=int, help="""Size of the puzzle (a row/column or a subgrid)""")
     parser.add_argument('--norm_last_layer', default=False, type=bool,
         help="""Whether or not to weight normalize the last layer of the MLP head.
         Not normalizing leads to better performance but can make the training unstable.
@@ -221,6 +221,7 @@ def main():
                         num_classes=n_classes,
                         window_size=4, 
                         patch_size=args.patch_size, 
+                        in_chans=args.grid_size**2,
                         embed_dim=96, 
                         depths=[2, 6, 4], 
                         num_heads=[3, 6, 12],
