@@ -35,7 +35,7 @@ from utils.scheduler import build_scheduler
 from utils.optimizer import get_adam_optimizer
 from utils.utils import clip_gradients
 from utils.utils import save_checkpoint
-from utils.cutmix import CutMix
+# from utils.cutmix import CutMix
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -52,7 +52,7 @@ class Trainer:
         self.device = device
         self.args = args
         self.scaler = GradScaler()
-        self.cutmix = CutMix(loss_fn)
+        # self.cutmix = CutMix(loss_fn)
 
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -74,12 +74,10 @@ class Trainer:
                 self.optimizer.zero_grad()
                 x, _, sudoku_label = batch
                 x, sudoku_label = x.to(self.device), sudoku_label.to(self.device)
-                outputs = self.model(x)
-                loss.backward()
 
                 with autocast():
-                    outputs = self.model(images)
-                    loss = self.cutmix(outputs, sudoku_label)
+                    outputs = self.model(x)
+                    loss = self.loss_fn(outputs, sudoku_label)
 
                 self.scaler.scale(loss).backward()
 
