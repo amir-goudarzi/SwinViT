@@ -1,5 +1,5 @@
 '''
-Created by https://github.com/MalumaDev
+Taken originally from https://github.com/MalumaDev and modified
 
 '''
 
