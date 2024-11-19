@@ -40,6 +40,8 @@ from utils.utils import save_checkpoint
 import warnings
 warnings.filterwarnings("ignore")
 
+import neptune.new as neptune
+
 
 class Trainer:
     def __init__(self, model, train_loader, val_loader, optimizer, lr_scheduler, loss_fn, device, args):
@@ -219,13 +221,14 @@ def main():
                         num_classes=n_classes,
                         window_size=4, 
                         patch_size=args.patch_size, 
-                        in_chans=args.grid_size**2,
+                        in_chans=1,
                         embed_dim=96, 
                         depths=[2, 6, 4], 
                         num_heads=[3, 6, 12],
                         mlp_ratio=args.vit_mlp_ratio, 
                         qkv_bias=True, 
                         drop_path_rate=args.drop_path_rate).to(device)
+    
 
     loss = nn.CrossEntropyLoss()
     optimizer = get_adam_optimizer(model.parameters(), lr=args.lr, wd=args.weight_decay)
