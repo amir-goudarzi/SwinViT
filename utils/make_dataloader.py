@@ -16,7 +16,6 @@ import webdataset as wds
 import wget
 from torch.utils.data import Dataset
 from tqdm import tqdm
-from sudoku_image import create_sudoku_image
 
 
 def bar_progress(current, total, width=80):
@@ -60,7 +59,6 @@ def sudoku_dataset(path, tr_va_te="train", transform=None, type=4, split=None, r
                         if tr_va_te + "_cell_labels" in f:
                             with open(os.path.join(root, f), "r") as liner:
                                 for i, l in enumerate(liner.readlines()):
-                                    # cells = [((c % type, c // type), int(j.split("_")[1])) for c, j in enumerate(l.split("\t"))]
                                     cells = [int(j.split("_")[1]) - (0 if not "EMNIST" in str(path_out) else 11) for c, j in enumerate(l.split("\t"))]
                                     samples_cells.append(cells)
                                     if (tr_va_te == "valid" or tr_va_te == "test") and i >= 100:
@@ -87,11 +85,18 @@ def sudoku_dataset(path, tr_va_te="train", transform=None, type=4, split=None, r
                 dst.write(sample)
                 key += 1
 
-    return wds.WebDataset(str(path_out), shardshuffle=True, handler=wds.warn_and_continue).shuffle(
-        100000 if tr_va_te == "train" else 0) \
-        .decode("pil").to_tuple("jpg;png", "cell.pyd", "cls").map_tuple(
-        lambda x: image_to_sub_square(transform(x), type=type),
-        None, None)
+    dataset = wds.WebDataset(str(path_out), shardshuffle=True, handler=wds.warn_and_continue).shuffle(
+            100000 if tr_va_te == "train" else 0) \
+            .decode("pil").to_tuple("jpg;png", "cell.pyd", "cls")
+
+    if return_whole_puzzle:
+        return dataset.map_tuple(
+            lambda x: transform(x),  # Apply the transformation if provided
+            None, None)
+    else:
+        return dataset.map_tuple(
+            lambda x: image_to_sub_square(transform(x), type=type),
+            None, None)
 
 
 
