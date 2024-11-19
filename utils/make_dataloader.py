@@ -16,7 +16,7 @@ import webdataset as wds
 import wget
 from torch.utils.data import Dataset
 from tqdm import tqdm
-import sudoku_image
+from sudoku_image import create_sudoku_image
 
 
 def bar_progress(current, total, width=80):
@@ -28,11 +28,10 @@ def bar_progress(current, total, width=80):
 
 def sudoku_dataset(path, tr_va_te="train", transform=None, type=4, split=None, return_whole_puzzle=False):
     transform = transform
-    type = type
     path_out = Path(path) / f"offline_{tr_va_te}_{split}.tar"
-    samples_cells = []
-    samples_pixels = []
+    samples_pixels = []  # Will store either full puzzle images or patches
     samples_labels = []
+    
     if not path_out.exists():
         files = os.walk(os.path.join(path))
         for root, dirs, files in tqdm(files, desc="Generating dataset"):
@@ -43,26 +42,20 @@ def sudoku_dataset(path, tr_va_te="train", transform=None, type=4, split=None, r
                         if tr_va_te + "_puzzle_pixels" in f:
                             with open(os.path.join(root, f), "r") as liner:
                                 for i, l in enumerate(liner.readlines()):
-                                    pixels = []
-                                    for c in range(type * type):
+                                    patches = []
+                                    for c in range(type * type):  # type is grid size
                                         step = 28 * 28
                                         number = l.split("\t")[c * step:c * step + step]
-                                        pixels.append([float(n) for n in number])
-                                    image = np.zeros((28 * type, 28 * type))
-                                    for i in range(type):
-                                        for j in range(type):
-                                            image[i * 28:(i + 1) * 28, j * 28:(j + 1) * 28] = np.reshape(
-                                                np.array(pixels[i * type + j]), (28, 28))
-                                    samples_pixels.append(image)
-                                    if (tr_va_te == "valid" or tr_va_te == "test") and i >= 100:
-                                        break
-
-                        if tr_va_te + "_cell_labels" in f:
-                            with open(os.path.join(root, f), "r") as liner:
-                                for i, l in enumerate(liner.readlines()):
-                                    # cells = [((c % type, c // type), int(j.split("_")[1])) for c, j in enumerate(l.split("\t"))]
-                                    cells = [int(j.split("_")[1]) - (0 if not "EMNIST" in str(path_out) else 11) for c, j in enumerate(l.split("\t"))]
-                                    samples_cells.append(cells)
+                                        patches.append(np.reshape(np.array([float(n) for n in number]), (28, 28)))
+                                    
+                                    if return_whole_puzzle:
+                                        # Combine patches into a full puzzle
+                                        composite_image = create_sudoku_image(patches, grid_size=type)
+                                        samples_pixels.append(composite_image)
+                                    else:
+                                        # Store individual patches
+                                        samples_pixels.append(patches)
+                                    
                                     if (tr_va_te == "valid" or tr_va_te == "test") and i >= 100:
                                         break
 
@@ -74,24 +67,9 @@ def sudoku_dataset(path, tr_va_te="train", transform=None, type=4, split=None, r
                                     if (tr_va_te == "valid" or tr_va_te == "test") and i >= 100:
                                         break
 
-        samples = [(p, c, l) for p, c, l in zip(samples_pixels, samples_cells, samples_labels)]
-        with wds.TarWriter(str(path_out)) as dst:
-            key = 0
-            for pixels, cell, label in tqdm(samples):
-                sample = {
-                    "__key__": f"{key:08d}",
-                    "png": pixels,
-                    "cell.pyd": np.asarray(cell),
-                    "cls": label
-                }
-                dst.write(sample)
-                key += 1
-
     return wds.WebDataset(str(path_out), shardshuffle=True, handler=wds.warn_and_continue).shuffle(
-        100000 if tr_va_te == "train" else 0) \
-        .decode("pil").to_tuple("jpg;png", "cell.pyd", "cls").map_tuple(
-        lambda x: image_to_sub_square(transform(x), type=type),
-        None, None)
+        100000 if tr_va_te == "train" else 0).decode("pil").to_tuple(
+        lambda x: transform(x) if return_whole_puzzle else image_to_sub_square(x, type=type), None)
 
 
 def image_to_sub_square(image, type=4):
