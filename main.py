@@ -243,7 +243,7 @@ def main():
     else:
         print("Model is using CPU")
 
-    train_loader, val_loader, test_loader, n_classes = get_loaders(batch_size= args.batch_size, num_workers=1, path= os.path.join(args.dir, args.dataset_path))
+    train_loader, val_loader, test_loader, n_classes = get_loaders(batch_size= args.batch_size, num_workers=1, path= os.path.join(args.dir, args.dataset_path), return_whole_puzzle=True)
     print("\n ---Dataloaders succusfully created--- \n")
 
 
