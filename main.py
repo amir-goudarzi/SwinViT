@@ -171,7 +171,7 @@ def main():
                     help='Data directory')
 
     # Model parameters
-    parser.add_argument('--patch_size', default=2, type=int, help="""Size in pixels of input square patches - default 4 (for 4x4 patches) """)
+    parser.add_argument('--patch_size', default=4, type=int, help="""Size in pixels of input square patches - default 4 (for 4x4 patches) """)
     parser.add_argument('--out_dim', default=1024, type=int, help="""Dimensionality of the SSL MLP head output. For complex and large datasets large values (like 65k) work well.""")
     parser.add_argument('--grid_size', default=4, type=int, help="""Size of the puzzle (a row/column or a subgrid)""")
     parser.add_argument('--norm_last_layer', default=False, type=bool,
@@ -181,7 +181,7 @@ def main():
     parser.add_argument('--use_bn_in_head', default=False, type=bool,
         help="Whether to use batch normalizations in projection head (Default: False)")
 
-    parser.add_argument('--image_size', default=32, type=int, help=""" Size of input image. """)
+    parser.add_argument('--image_size', default=112, type=int, help=""" Size of input image. """)
     parser.add_argument('--in_channels',default=3, type=int, help=""" input image channels. """)
     parser.add_argument('--embed_dim',default=192, type=int, help=""" dimensions of vit """)
     parser.add_argument('--num_layers',default=9, type=int, help=""" No. of layers of ViT """)
@@ -265,7 +265,7 @@ def main():
     lr_scheduler = build_scheduler(args, optimizer)
 
 
-    trainer = Trainer(model, train_loader, val_loader, optimizer, lr_scheduler, loss, device, args)
+    trainer = Trainer(model, train_loader, val_loader, test_loader, optimizer, lr_scheduler, loss, device, args)
     trainer.train()
     trainer.test()
 
