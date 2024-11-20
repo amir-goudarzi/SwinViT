@@ -44,10 +44,11 @@ import neptune.new as neptune
 
 
 class Trainer:
-    def __init__(self, model, train_loader, val_loader, optimizer, lr_scheduler, loss_fn, device, args):
+    def __init__(self, model, train_loader, val_loader, test_loader, optimizer, lr_scheduler, loss_fn, device, args):
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.test_loader = test_loader
         self.optimizer = optimizer
         self.lr_scheduler = lr_scheduler
         self.loss_fn = loss_fn
@@ -132,6 +133,35 @@ class Trainer:
             self.lr_scheduler.step()
 
         return train_losses, val_losses, train_accuracies, val_accuracies
+    
+    def test(self):
+        
+        self.model.eval()  
+        total_test_loss, total_test_correct, total_test_samples = 0.0, 0, 0
+
+        self.logger.info("---Testing Phase---")
+
+        with torch.no_grad():
+            for images, _, sudoku_label in self.test_loader:
+                images, sudoku_label = images.to(self.device), sudoku_label.to(self.device)
+                outputs = self.model(images)
+                loss = self.loss_fn(outputs, sudoku_label)
+                
+                total_test_loss += loss.item()
+                _, predicted = torch.max(outputs.data, 1)
+                total_test_correct += (predicted == sudoku_label).sum().item()
+                total_test_samples += images.shape[0]
+
+        avg_test_loss = total_test_loss / total_test_samples
+        test_accuracy = total_test_correct / total_test_samples
+
+        self.logger.info(f"Test Loss: {avg_test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
+
+        return {
+            "test_loss": avg_test_loss,
+            "test_accuracy": test_accuracy
+        }
+
 
 
 
@@ -221,7 +251,7 @@ def main():
                         num_classes=n_classes,
                         window_size=4, 
                         patch_size=args.patch_size, 
-                        in_chans=1,
+                        in_chans=args.in_channels,
                         embed_dim=96, 
                         depths=[2, 6, 4], 
                         num_heads=[3, 6, 12],
@@ -234,7 +264,11 @@ def main():
     optimizer = get_adam_optimizer(model.parameters(), lr=args.lr, wd=args.weight_decay)
     lr_scheduler = build_scheduler(args, optimizer)
 
-    Trainer(model, train_loader, val_loader, optimizer, lr_scheduler, loss, device, args).train()
+
+    trainer = Trainer(model, train_loader, val_loader, optimizer, lr_scheduler, loss, device, args)
+    trainer.train()
+    trainer.test()
+
 
 if __name__ == "__main__":
     main()
