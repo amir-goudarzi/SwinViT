@@ -44,7 +44,8 @@ import neptune.new as neptune
 
 
 class Trainer:
-    def __init__(self, model, train_loader, val_loader, test_loader, optimizer, lr_scheduler, loss_fn, device, args):
+    def __init__(self, model, train_loader, val_loader, test_loader, optimizer, lr_scheduler, loss_fn, device, params, args):
+        self.params = params
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -59,8 +60,16 @@ class Trainer:
 
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+        
+        self.run = neptune.init_run(
+            project=args.neptune_project,
+            api_token=args.neptune_api_token
+        )
+        self.run["parameters"] = params
+
 
     def train(self):
+
         print("\n--- Training Progress ---\n")
 
         train_losses, val_losses, train_accuracies, val_accuracies = [], [], [], []
@@ -95,6 +104,9 @@ class Trainer:
                 _, predicted = torch.max(outputs.data, 1)
                 total_train_correct += (predicted == sudoku_label).sum().item()
                 total_train_samples += x.shape[0]
+                
+                # Log training loss to Neptune
+                self.run[f"train/loss"].log(loss.item())
 
                 epoch_progress_bar.update(1)
 
@@ -121,6 +133,8 @@ class Trainer:
             current_lr = self.optimizer.param_groups[0]['lr']
 
             epoch_progress_bar.set_postfix({"Train Loss": avg_train_loss, "Train Acc": train_accuracy, "Val Loss": avg_val_loss, "Val Acc": val_accuracy, "LR": current_lr})
+            # Log validation accuracy to Neptune
+            self.run[f"val/accuracy"].log(val_accuracy)
             epoch_progress_bar.close()
 
             # Logging and Checkpointing
@@ -156,6 +170,9 @@ class Trainer:
         test_accuracy = total_test_correct / total_test_samples
 
         self.logger.info(f"Test Loss: {avg_test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
+        # Log testing accuracy to Neptune
+        self.run[f"test/accuracy"].log(test_accuracy)
+        self.run.stop()
 
         return {
             "test_loss": avg_test_loss,
@@ -172,6 +189,7 @@ def main():
 
     # Model parameters
     parser.add_argument('--patch_size', default=4, type=int, help="""Size in pixels of input square patches - default 4 (for 4x4 patches) """)
+    parser.add_argument('--window_size', default=4, type=int, help="""Window size. """)
     parser.add_argument('--out_dim', default=1024, type=int, help="""Dimensionality of the SSL MLP head output. For complex and large datasets large values (like 65k) work well.""")
     parser.add_argument('--grid_size', default=4, type=int, help="""Size of the puzzle (a row/column or a subgrid)""")
     parser.add_argument('--norm_last_layer', default=False, type=bool,
@@ -184,8 +202,8 @@ def main():
     parser.add_argument('--image_size', default=112, type=int, help=""" Size of input image. """)
     parser.add_argument('--in_channels',default=3, type=int, help=""" input image channels. """)
     parser.add_argument('--embed_dim',default=192, type=int, help=""" dimensions of vit """)
-    parser.add_argument('--num_layers',default=3, type=int, help=""" No. of layers of ViT """)
-    parser.add_argument('--num_heads',default=12, type=int, help=""" No. of heads in attention layer
+    parser.add_argument('--num_layers',default=[2, 6, 4], type=tuple(int), help=""" No. of layers of ViT in each stage""")
+    parser.add_argument('--num_heads',default=[3, 6, 12], type=tuple(int), help=""" No. of heads in attention layer
                                                                                  in ViT """)
     parser.add_argument('--vit_mlp_ratio',default=2, type=int, help=""" MLP hidden dim """)
     parser.add_argument('--qkv_bias',default=True, type=bool, help=""" Bias in Q K and V values """)
@@ -224,7 +242,9 @@ def main():
     parser.add_argument('--num_workers', default=1, type=int, help='Number of data loading workers per GPU.')
     parser.add_argument("--mlp_head_in", default=192, type=int, help="input dimension going inside MLP projection head")
     parser.add_argument("--checkpoint_dir", default="checkpoints", type=str, help="directory to save checkpoints")
-    
+    parser.add_argument("--neptune_project", type=str, help="Neptune project directory")
+    parser.add_argument("--neptune_api_token", type=str, help="Neptune api token")
+
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
@@ -248,6 +268,7 @@ def main():
 
     params = {
         "PATCH_SIZE": args.patch_size,
+        "WINDOW_SIZE": args.window_size,
         "POSITIONAL_ENCODING": args.positional_encoding,
         "EMBEDDING_DIM": args.embed_dim,
         "NUM_TRANSFORMER_LAYERS": args.num_layers,
@@ -269,12 +290,12 @@ def main():
 
     model = SwinTransformer(img_size=args.image_size,
                         num_classes=n_classes,
-                        window_size=4, 
-                        patch_size=args.patch_size, 
+                        window_size=params['WINDOW_SIZE'], 
+                        patch_size=params['PATCH_SIZE'], 
                         in_chans=args.in_channels,
-                        embed_dim=96, 
-                        depths=[2, 6, 4], 
-                        num_heads=[3, 6, 12],
+                        embed_dim=params['EMBEDDING_DIM'], 
+                        depths=params['NUM_TRANSFORMER_LAYERS'], 
+                        num_heads=params['NUM_HEADS'],
                         mlp_ratio=args.vit_mlp_ratio, 
                         qkv_bias=True, 
                         drop_path_rate=args.drop_path_rate).to(device)
@@ -286,9 +307,10 @@ def main():
 
     
 
-    trainer = Trainer(model, train_loader, val_loader, test_loader, optimizer, lr_scheduler, loss, device, args)
+    trainer = Trainer(model, train_loader, val_loader, test_loader, optimizer, lr_scheduler, loss, device, params, args)
     trainer.train()
     trainer.test()
+    
 
 
 if __name__ == "__main__":
