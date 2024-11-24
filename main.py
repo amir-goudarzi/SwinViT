@@ -184,12 +184,14 @@ def main():
     parser.add_argument('--image_size', default=112, type=int, help=""" Size of input image. """)
     parser.add_argument('--in_channels',default=3, type=int, help=""" input image channels. """)
     parser.add_argument('--embed_dim',default=192, type=int, help=""" dimensions of vit """)
-    parser.add_argument('--num_layers',default=9, type=int, help=""" No. of layers of ViT """)
+    parser.add_argument('--num_layers',default=3, type=int, help=""" No. of layers of ViT """)
     parser.add_argument('--num_heads',default=12, type=int, help=""" No. of heads in attention layer
                                                                                  in ViT """)
     parser.add_argument('--vit_mlp_ratio',default=2, type=int, help=""" MLP hidden dim """)
     parser.add_argument('--qkv_bias',default=True, type=bool, help=""" Bias in Q K and V values """)
     parser.add_argument('--drop_rate',default=0., type=float, help=""" dropout """)
+    parser.add_argument('--positional_encoding', default='learned', type=str,
+        choices=['learned', 'freq', 'abs'], help="""Type of positional encoding.""")
 
     # Training/Optimization parameters
     parser.add_argument('--weight_decay', type=float, default=1e-1, help="""Initial value of the
@@ -214,11 +216,12 @@ def main():
                     help='Label smoothing for optimizer')
     parser.add_argument('--gamma', type=float, default=1.0,
                     help='Gamma value for Cosine LR schedule')
+    
 
     # Misc
     parser.add_argument('--dataset_path', default='VisualSudoku', type=str, help='Please specify path to the training data.')
     parser.add_argument('--seed', default=42, type=int, help='Random seed.')
-    parser.add_argument('--num_workers', default=8, type=int, help='Number of data loading workers per GPU.')
+    parser.add_argument('--num_workers', default=1, type=int, help='Number of data loading workers per GPU.')
     parser.add_argument("--mlp_head_in", default=192, type=int, help="input dimension going inside MLP projection head")
     parser.add_argument("--checkpoint_dir", default="checkpoints", type=str, help="directory to save checkpoints")
     
@@ -243,7 +246,24 @@ def main():
     else:
         print("Model is using CPU")
 
-    train_loader, val_loader, test_loader, n_classes = get_loaders(batch_size= args.batch_size, num_workers=1, path= os.path.join(args.dir, args.dataset_path), return_whole_puzzle=True)
+    params = {
+        "PATCH_SIZE": args.patch_size,
+        "POSITIONAL_ENCODING": args.positional_encoding,
+        "EMBEDDING_DIM": args.embed_dim,
+        "NUM_TRANSFORMER_LAYERS": args.num_layers,
+        "MLP_DROPOUT": 0.1,
+        "ATTN_DROPOUT": 0.0,
+        "MLP_SIZE": args.embed_dim * args.vit_mlp_ratio,
+        "NUM_HEADS": args.num_heads,
+        "BATCH_SIZE": args.batch_size,
+        "ADAM_OPTIMIZER": True,
+        "LEARNING_RATE": args.lr,
+        "NUM_EPOCHS": args.epochs,
+        "NUM_WORKERS": args.num_workers
+    }
+
+
+    train_loader, val_loader, test_loader, n_classes = get_loaders(batch_size= params['BATCH_SIZE'], num_workers=params['NUM_WORKERS'], path= os.path.join(args.dir, args.dataset_path), return_whole_puzzle=True)
     print("\n ---Dataloaders succusfully created--- \n")
 
 
@@ -264,6 +284,7 @@ def main():
     optimizer = get_adam_optimizer(model.parameters(), lr=args.lr, wd=args.weight_decay)
     lr_scheduler = build_scheduler(args, optimizer)
 
+    
 
     trainer = Trainer(model, train_loader, val_loader, test_loader, optimizer, lr_scheduler, loss, device, args)
     trainer.train()
