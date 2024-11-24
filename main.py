@@ -202,8 +202,8 @@ def main():
     parser.add_argument('--image_size', default=112, type=int, help=""" Size of input image. """)
     parser.add_argument('--in_channels',default=3, type=int, help=""" input image channels. """)
     parser.add_argument('--embed_dim',default=192, type=int, help=""" dimensions of vit """)
-    parser.add_argument('--num_layers',default=[2, 6, 4], type=tuple(int), help=""" No. of layers of ViT in each stage""")
-    parser.add_argument('--num_heads',default=[3, 6, 12], type=tuple(int), help=""" No. of heads in attention layer
+    parser.add_argument('--num_layers',default=[2, 6, 4], type=list, help=""" No. of layers of ViT in each stage""")
+    parser.add_argument('--num_heads',default=[3, 6, 12], type=list, help=""" No. of heads in attention layer
                                                                                  in ViT """)
     parser.add_argument('--vit_mlp_ratio',default=2, type=int, help=""" MLP hidden dim """)
     parser.add_argument('--qkv_bias',default=True, type=bool, help=""" Bias in Q K and V values """)
