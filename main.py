@@ -203,8 +203,8 @@ def main():
     parser.add_argument('--image_size', default=112, type=int, help=""" Size of input image. """)
     parser.add_argument('--in_channels',default=3, type=int, help=""" input image channels. """)
     parser.add_argument('--embed_dim',default=192, type=int, help=""" dimensions of vit """)
-    parser.add_argument('--num_layers',default=[2, 6, 4], type=list, help=""" No. of layers of ViT in each stage""")
-    parser.add_argument('--num_heads',default=[3, 6, 12], type=list, help=""" No. of heads in attention layer
+    parser.add_argument('--num_layers',default="2, 6, 4", type=str, help=""" No. of layers of ViT in each stage""")
+    parser.add_argument('--num_heads',default="3, 6, 12", type=str, help=""" No. of heads in attention layer
                                                                                  in ViT """)
     parser.add_argument('--vit_mlp_ratio',default=2, type=int, help=""" MLP hidden dim """)
     parser.add_argument('--qkv_bias',default=True, type=bool, help=""" Bias in Q K and V values """)
@@ -272,11 +272,11 @@ def main():
         "WINDOW_SIZE": args.window_size,
         "POSITIONAL_ENCODING": args.positional_encoding,
         "EMBEDDING_DIM": args.embed_dim,
-        "NUM_TRANSFORMER_LAYERS": str(args.num_layers),
+        "NUM_TRANSFORMER_LAYERS": args.num_layers,
         "MLP_DROPOUT": 0.1,
         "ATTN_DROPOUT": 0.0,
         "MLP_SIZE": args.embed_dim * args.vit_mlp_ratio,
-        "NUM_HEADS": str(args.num_heads),
+        "NUM_HEADS": args.num_heads,
         "BATCH_SIZE": args.batch_size,
         "ADAM_OPTIMIZER": True,
         "LEARNING_RATE": args.lr,
@@ -288,15 +288,16 @@ def main():
     train_loader, val_loader, test_loader, n_classes = get_loaders(batch_size= params['BATCH_SIZE'], num_workers=params['NUM_WORKERS'], path= os.path.join(args.dir, args.dataset_path), return_whole_puzzle=True)
     print("\n ---Dataloaders succusfully created--- \n")
 
-
+    num_layers = [item for item in args.num_layers.split(',')]
+    num_heads = [item for item in args.num_heads.split(',')]
     model = SwinTransformer(img_size=args.image_size,
                         num_classes=n_classes,
                         window_size=params['WINDOW_SIZE'], 
                         patch_size=params['PATCH_SIZE'], 
                         in_chans=args.in_channels,
                         embed_dim=params['EMBEDDING_DIM'], 
-                        depths=args.num_layers, 
-                        num_heads=args.num_heads,
+                        depths=num_layers, 
+                        num_heads=num_heads,
                         mlp_ratio=args.vit_mlp_ratio, 
                         qkv_bias=True, 
                         drop_path_rate=args.drop_path_rate).to(device)
