@@ -288,8 +288,8 @@ def main():
     train_loader, val_loader, test_loader, n_classes = get_loaders(batch_size= params['BATCH_SIZE'], num_workers=params['NUM_WORKERS'], path= os.path.join(args.dir, args.dataset_path), return_whole_puzzle=True)
     print("\n ---Dataloaders succusfully created--- \n")
 
-    num_layers = [item for item in args.num_layers.split(',')]
-    num_heads = [item for item in args.num_heads.split(',')]
+    num_layers = [int(item) for item in args.num_layers.split(',')]
+    num_heads = [int(item) for item in args.num_heads.split(',')]
     model = SwinTransformer(img_size=args.image_size,
                         num_classes=n_classes,
                         window_size=params['WINDOW_SIZE'], 
