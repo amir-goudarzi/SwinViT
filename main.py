@@ -115,7 +115,7 @@ class Trainer:
 
             # Validation Phase
             # self.model.eval()
-            total_val_loss, total_val_correct, total_val_samples = 0.0, 0, 0
+            total_val_loss, total_val_correct, total_val_samples = 1.0, 1, 1
             # with torch.no_grad():
             #     for images, _, sudoku_label in self.val_loader:
             #         images, sudoku_label = images.to(self.device), sudoku_label.to(self.device)

@@ -14,7 +14,7 @@ import torch
 import torchvision.transforms as transforms
 import webdataset as wds
 import wget
-from torch.utils.data import ConcatDataset
+from torch.utils.data import IterableDataset
 import itertools
 from tqdm import tqdm
 
@@ -151,6 +151,17 @@ def download_dataset(dataset, path):
             zip_ref.extractall(path)
             # os.remove(path / "data.zip")
 
+class CombinedIterableDataset(IterableDataset):
+    def __init__(self, *datasets):
+        self.datasets = datasets
+        self.total_length = sum(len(dataset) for dataset in datasets if hasattr(dataset, '__len__'))  # Estimate length
+
+    def __iter__(self):
+        return itertools.chain(*self.datasets)
+
+    def __len__(self):
+        return self.total_length
+
 
 def get_loaders(batch_size, type="mnist4", split=10, num_workers=12, path='.', return_whole_puzzle=False):
     transform = transforms.Compose(
@@ -231,7 +242,7 @@ def get_loaders(batch_size, type="mnist4", split=10, num_workers=12, path='.', r
     # valloader = torch.utils.data.DataLoader(val_set, batch_size=batch_size,
     #                                         num_workers=num_workers, drop_last=True)
 
-    train_set = itertools.chain(train_set, val_set)
+    train_set = CombinedIterableDataset(train_set, val_set)
 
     trainloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
                                               num_workers=num_workers, drop_last=True)
