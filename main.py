@@ -80,7 +80,7 @@ class Trainer:
 
             # Training Phase
             self.model.train()
-            total_train_loss, total_train_correct, total_train_samples = 0.0, 0, 0
+            total_train_loss, total_train_correct, total_train_samples = 0.0, 0, 1
             for batch in self.train_loader:
                 # images, labels = self.cutmix.prepare_batch(batch, self.device, non_blocking=True)
                 self.optimizer.zero_grad()
