@@ -114,19 +114,19 @@ class Trainer:
             train_accuracy = total_train_correct / total_train_samples
 
             # Validation Phase
-            self.model.eval()
+            # self.model.eval()
             total_val_loss, total_val_correct, total_val_samples = 0.0, 0, 0
-            with torch.no_grad():
-                for images, _, sudoku_label in self.val_loader:
-                    images, sudoku_label = images.to(self.device), sudoku_label.to(self.device)
-                    outputs = self.model(images)
-                    loss = self.loss_fn(outputs, sudoku_label)
-                    total_val_loss += loss.item()
-                    _, predicted = torch.max(outputs.data, 1)
-                    total_val_correct += (predicted == sudoku_label).sum().item()
-                    total_val_samples += images.shape[0]
+            # with torch.no_grad():
+            #     for images, _, sudoku_label in self.val_loader:
+            #         images, sudoku_label = images.to(self.device), sudoku_label.to(self.device)
+            #         outputs = self.model(images)
+            #         loss = self.loss_fn(outputs, sudoku_label)
+            #         total_val_loss += loss.item()
+            #         _, predicted = torch.max(outputs.data, 1)
+            #         total_val_correct += (predicted == sudoku_label).sum().item()
+            #         total_val_samples += images.shape[0]
 
-                    epoch_progress_bar.update(1)
+            #         epoch_progress_bar.update(1)
 
             avg_val_loss = total_val_loss / total_val_samples
             val_accuracy = total_val_correct / total_val_samples
