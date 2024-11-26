@@ -14,7 +14,7 @@ import torch
 import torchvision.transforms as transforms
 import webdataset as wds
 import wget
-from torch.utils.data import Dataset
+from torch.utils.data import ConcatDataset
 from tqdm import tqdm
 
 
@@ -224,11 +224,18 @@ def get_loaders(batch_size, type="mnist4", split=10, num_workers=12, path='.', r
     testset = sudoku_dataset(path=path, tr_va_te="test",
                              transform=transform, type=n_classes, split=split, return_whole_puzzle=return_whole_puzzle)
 
+    # trainloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
+    #                                           num_workers=num_workers, drop_last=True)
+
+    # valloader = torch.utils.data.DataLoader(val_set, batch_size=batch_size,
+    #                                         num_workers=num_workers, drop_last=True)
+
+    train_set = ConcatDataset([train_set, val_set])
+
     trainloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
                                               num_workers=num_workers, drop_last=True)
-
-    valloader = torch.utils.data.DataLoader(val_set, batch_size=batch_size,
-                                            num_workers=num_workers, drop_last=True)
+    
+    valloader = None
 
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                              num_workers=num_workers, drop_last=True)
