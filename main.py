@@ -80,7 +80,7 @@ class Trainer:
 
             # Training Phase
             self.model.train()
-            total_train_loss, total_train_correct, total_train_samples = 0.0, 0, 1
+            total_train_loss, total_train_correct, total_train_samples = 0.0, 0, 0
             for batch in self.train_loader:
                 # images, labels = self.cutmix.prepare_batch(batch, self.device, non_blocking=True)
                 self.optimizer.zero_grad()
@@ -115,7 +115,7 @@ class Trainer:
 
             # Validation Phase
             # self.model.eval()
-            total_val_loss, total_val_correct, total_val_samples = 1.0, 1, 1
+            total_val_loss, total_val_correct, total_val_samples = 0.0, 0, 1
             # with torch.no_grad():
             #     for images, _, sudoku_label in self.val_loader:
             #         images, sudoku_label = images.to(self.device), sudoku_label.to(self.device)
