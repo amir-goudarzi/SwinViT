@@ -208,7 +208,8 @@ def main():
                                                                                  in ViT """)
     parser.add_argument('--vit_mlp_ratio',default=2, type=int, help=""" MLP hidden dim """)
     parser.add_argument('--qkv_bias',default=True, type=bool, help=""" Bias in Q K and V values """)
-    parser.add_argument('--drop_rate',default=0., type=float, help=""" dropout """)
+    parser.add_argument('--mlp_dropout',default=0.1, type=float, help=""" MLP dropout """)
+    parser.add_argument('--attn_dropout',default=0., type=float, help=""" attention dropout """)
     parser.add_argument('--positional_encoding', default='learned', type=str,
         choices=['learned', 'freq', 'abs'], help="""Type of positional encoding.""")
 
@@ -273,8 +274,8 @@ def main():
         "POSITIONAL_ENCODING": args.positional_encoding,
         "EMBEDDING_DIM": args.embed_dim,
         "NUM_TRANSFORMER_LAYERS": args.num_layers,
-        "MLP_DROPOUT": 0.1,
-        "ATTN_DROPOUT": 0.0,
+        "MLP_DROPOUT": args.mlp_dropout,
+        "ATTN_DROPOUT": args.attn_dropout,
         "MLP_SIZE": args.embed_dim * args.vit_mlp_ratio,
         "NUM_HEADS": args.num_heads,
         "BATCH_SIZE": args.batch_size,
@@ -300,6 +301,8 @@ def main():
                         num_heads=num_heads,
                         mlp_ratio=args.vit_mlp_ratio, 
                         qkv_bias=True, 
+                        drop_rate=params['MLP_DROPOUT'],
+                        attn_drop_rate=params['ATTN_DROPOUT'],
                         drop_path_rate=args.drop_path_rate).to(device)
     
 

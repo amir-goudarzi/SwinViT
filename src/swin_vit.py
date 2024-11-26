@@ -183,7 +183,7 @@ class SwinTransformerBlock(nn.Module):
     """
 
     def __init__(self, dim, input_resolution, num_heads, window_size=7, shift_size=0,
-                 mlp_ratio=4., qkv_bias=True, qk_scale=None, drop=0., attn_drop=0., drop_path=0.,
+                 mlp_ratio=4., qkv_bias=True, qk_scale=None, drop=0.1, attn_drop=0., drop_path=0.,
                  act_layer=nn.GELU, norm_layer=nn.LayerNorm):
         super().__init__()
         self.dim = dim
@@ -392,7 +392,7 @@ class BasicLayer(nn.Module):
     """
 
     def __init__(self, dim, input_resolution, depth, num_heads, window_size,
-                 mlp_ratio=4., qkv_bias=True, qk_scale=None, drop=0., attn_drop=0.,
+                 mlp_ratio=4., qkv_bias=True, qk_scale=None, drop=0.1, attn_drop=0.,
                  drop_path=0., norm_layer=nn.LayerNorm, downsample=None):
 
         super().__init__()
@@ -520,7 +520,7 @@ class SwinTransformer(nn.Module):
     def __init__(self, img_size=224, patch_size=4, in_chans=3, num_classes=1000,
                  embed_dim=96, depths=[2, 2, 6, 2], num_heads=[3, 6, 12, 24],
                  window_size=7, mlp_ratio=4., qkv_bias=True, qk_scale=None,
-                 drop_rate=0., attn_drop_rate=0., drop_path_rate=0.,
+                 drop_rate=0.1, attn_drop_rate=0., drop_path_rate=0.,
                  norm_layer=partial(nn.LayerNorm, eps=1e-6), ape=False, patch_norm=True, 
                  return_all_tokens=False, use_mean_pooling=True, masked_im_modeling=False):
 
