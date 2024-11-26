@@ -15,6 +15,7 @@ import torchvision.transforms as transforms
 import webdataset as wds
 import wget
 from torch.utils.data import ConcatDataset
+import itertools
 from tqdm import tqdm
 
 
@@ -230,7 +231,7 @@ def get_loaders(batch_size, type="mnist4", split=10, num_workers=12, path='.', r
     # valloader = torch.utils.data.DataLoader(val_set, batch_size=batch_size,
     #                                         num_workers=num_workers, drop_last=True)
 
-    train_set = ConcatDataset([train_set, val_set])
+    train_set = itertools.chain(train_set, val_set)
 
     trainloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
                                               num_workers=num_workers, drop_last=True)
