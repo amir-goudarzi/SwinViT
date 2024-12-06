@@ -125,6 +125,9 @@ class Trainer:
                     _, predicted = torch.max(outputs.data, 1)
                     total_val_correct += (predicted == sudoku_label).sum().item()
                     total_val_samples += images.shape[0]
+                    
+                    # Log validation loss to Neptune
+                    self.run[f"val/loss"].log(loss.item())
 
                     epoch_progress_bar.update(1)
 
@@ -145,7 +148,8 @@ class Trainer:
                 save_checkpoint(self.args.checkpoint_dir, self.model, epoch)
                 self.logger.info(f"New best accuracy: {best_accuracy:.4f}, Model saved as 'best_model.pth'")
 
-            self.lr_scheduler.step()
+            if self.args.scheduler:
+                self.lr_scheduler.step()
 
         return train_losses, val_losses, train_accuracies, val_accuracies
     
@@ -234,6 +238,7 @@ def main():
     parser.add_argument('--drop_path_rate', type=float, default=0.1, help="stochastic depth rate")
     parser.add_argument('--label_smoothing', type=float, default=0.1,
                     help='Label smoothing for optimizer')
+    parser.add_argument("--scheduler", type=bool, required=False, default=True, help="True to use scheduler")
     parser.add_argument('--gamma', type=float, default=1.0,
                     help='Gamma value for Cosine LR schedule')
     
@@ -246,6 +251,7 @@ def main():
     parser.add_argument("--checkpoint_dir", default="checkpoints", type=str, help="directory to save checkpoints")
     parser.add_argument("--neptune_project", type=str, help="Neptune project directory")
     parser.add_argument("--neptune_api_token", type=str, help="Neptune api token")
+    
 
     args = parser.parse_args()
 
@@ -282,6 +288,7 @@ def main():
         "ADAM_OPTIMIZER": True,
         "LEARNING_RATE": args.lr,
         "NUM_EPOCHS": args.epochs,
+        "SCHEDULER_USED": args.scheduler,
         "NUM_WORKERS": args.num_workers
     }
 
