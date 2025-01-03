@@ -112,6 +112,7 @@ class Trainer:
 
             avg_train_loss = total_train_loss / total_train_samples
             train_accuracy = total_train_correct / total_train_samples
+            self.run[f"train/accuracy"].log(train_accuracy)
 
             # Validation Phase
             self.model.eval()
@@ -138,7 +139,7 @@ class Trainer:
             epoch_progress_bar.set_postfix({"Train Loss": avg_train_loss, "Train Acc": train_accuracy, "Val Loss": avg_val_loss, "Val Acc": val_accuracy, "LR": current_lr})
             # Log validation accuracy to Neptune
             self.run[f"val/accuracy"].log(val_accuracy)
-            self.run[f"train/accuracy"].log(train_accuracy)
+            
             epoch_progress_bar.close()
 
             # Logging and Checkpointing
