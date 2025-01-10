@@ -48,7 +48,7 @@ for params in param_combinations:
 
     patch_window_combination, mlp_size, num_transformer_layer, num_attention_head, embedding_dim, learning_rate, optimizer, batch_size = params
 
-    vit_mlp_ratio = mlp_sizes / embedding_dim
+    vit_mlp_ratio = mlp_size / embedding_dim
     patch_size, window_size = patch_window_combination
 
     # Construct command
