@@ -48,33 +48,33 @@ for params in param_combinations:
 
     patch_window_combination, mlp_size, num_transformer_layer, num_attention_head, embedding_dim, learning_rate, optimizer, batch_size = params
 
-    vit_mlp_ratio = mlp_size / embedding_dim
+    vit_mlp_ratio = int(mlp_size / embedding_dim)
     patch_size, window_size = patch_window_combination
 
     # Construct command
     command = f"""
     python ./main.py \
-       --patch_size {patch_size} \
-       --window_size {window_size} \
+       --patch_size "{patch_size}" \
+       --window_size "{window_size}" \
        --image_size 112 \
        --in_channels 1 \
-       --embed_dim {embedding_dim} \
-       --num_layers {num_transformer_layer} \
-       --num_heads {num_attention_head} \
-       --vit_mlp_ratio {vit_mlp_ratio} \
+       --embed_dim "{embedding_dim}" \
+       --num_layers "{num_transformer_layer}" \
+       --num_heads "{num_attention_head}" \
+       --vit_mlp_ratio "{vit_mlp_ratio}" \
        --weight_decay 0.1 \
-       --batch_size {batch_size} \
-       --lr {learning_rate} \
-       --epochs {num_epochs} \
+       --batch_size "{batch_size}" \
+       --lr "{learning_rate}" \
+       --epochs "{num_epochs}" \
        --warmup_epochs 10 \
-       --mlp_dropout {mlp_dropout} \
-       --attn_dropout {attn_dropout} \
-       --scheduler "{scheduler_used} \
+       --mlp_dropout "{mlp_dropout}" \
+       --attn_dropout "{attn_dropout}" \
+       --scheduler "{scheduler_used}" \
        --min_lr 1e-6 \
        --clip_grad 3.0 \
        --neptune_project "{neptune_project}" \
        --neptune_api_token "{neptune_api_token}" \
-       --dir "{directory}"
+       --dir "{directory}" \
        --num_workers "{num_workers}" 
     """
 
