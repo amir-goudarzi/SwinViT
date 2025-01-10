@@ -234,8 +234,8 @@ def main():
     parser.add_argument('--clip_grad', type=float, default=3.0, help="""Maximal parameter
         gradient norm if using gradient clipping. Clipping with norm .3 ~ 1.0 can
         help optimization for larger ViT architectures. 0 for disabling.""")
-    parser.add_argument('--optimizer', default='adamw', type=str,
-        choices=['adamw', 'sgd', 'lars'], help="""Type of optimizer. Recommend using adamw with ViTs.""")
+    parser.add_argument('--optimizer', default='Adam', type=str,
+        choices=['Adam', 'SGD'], help="""Type of optimizer. Recommend using adamw with ViTs.""")
     parser.add_argument('--drop_path_rate', type=float, default=0.1, help="stochastic depth rate")
     parser.add_argument('--label_smoothing', type=float, default=0.1,
                     help='Label smoothing for optimizer')
@@ -286,7 +286,7 @@ def main():
         "MLP_SIZE": args.embed_dim * args.vit_mlp_ratio,
         "NUM_HEADS": args.num_heads,
         "BATCH_SIZE": args.batch_size,
-        "ADAM_OPTIMIZER": True,
+        "ADAM_OPTIMIZER": args.optimizer,
         "LEARNING_RATE": args.lr,
         "NUM_EPOCHS": args.epochs,
         "SCHEDULER_USED": args.scheduler,
@@ -315,7 +315,10 @@ def main():
     
 
     loss = nn.CrossEntropyLoss()
-    optimizer = get_adam_optimizer(model.parameters(), lr=args.lr, wd=args.weight_decay)
+    if args.optimizer == "Adam":
+        optimizer = get_adam_optimizer(model.parameters(), lr=args.lr, wd=args.weight_decay)
+    else:
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
     lr_scheduler = build_scheduler(args, optimizer)
 
     
