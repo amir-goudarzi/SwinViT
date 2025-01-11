@@ -111,7 +111,7 @@ class Trainer:
                 epoch_progress_bar.update(1)
 
             avg_train_loss = total_train_loss / total_train_samples
-            train_accuracy = total_train_correct / total_train_samples
+            train_accuracy = (total_train_correct / total_train_samples) * 100
             self.run[f"train/accuracy"].log(train_accuracy)
 
             # Validation Phase
@@ -133,7 +133,7 @@ class Trainer:
                     epoch_progress_bar.update(1)
 
             avg_val_loss = total_val_loss / total_val_samples
-            val_accuracy = total_val_correct / total_val_samples
+            val_accuracy = (total_val_correct / total_val_samples) * 100
             current_lr = self.optimizer.param_groups[0]['lr']
 
             epoch_progress_bar.set_postfix({"Train Loss": avg_train_loss, "Train Acc": train_accuracy, "Val Loss": avg_val_loss, "Val Acc": val_accuracy, "LR": current_lr})
