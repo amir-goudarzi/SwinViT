@@ -152,6 +152,8 @@ class Trainer:
             if self.args.scheduler:
                 self.lr_scheduler.step()
 
+            print(f"\n\n--- Done epoch number {epoch} ---\n\n")
+
         return train_losses, val_losses, train_accuracies, val_accuracies
     
     def test(self):
