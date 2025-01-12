@@ -76,7 +76,7 @@ class Trainer:
         best_accuracy = 0.0
 
         for epoch in range(self.args.epochs):
-            epoch_progress_bar = tqdm(desc=f"Epoch {epoch + 1}/{self.args.epochs}", unit="batch")
+            epoch_progress_bar = tqdm(desc=f"Epoch {epoch + 1}/{self.args.epochs}", unit="batch", disable=os.environ.get("SSH_CLIENT"))
 
             # Training Phase
             self.model.train()
