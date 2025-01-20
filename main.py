@@ -146,7 +146,7 @@ class Trainer:
             self.logger.info(f"Epoch {epoch + 1}/{self.args.epochs}: Train Loss: {avg_train_loss:.4f}, Train Acc: {train_accuracy:.4f}, Val Loss: {avg_val_loss:.4f}, Val Acc: {val_accuracy:.4f}, LR: {current_lr:.4f}")
             if val_accuracy > best_accuracy:
                 best_accuracy = val_accuracy
-                save_checkpoint(self.args.checkpoint_dir, self.model, epoch)
+                # save_checkpoint(self.args.checkpoint_dir, self.model, epoch)
                 self.logger.info(f"New best accuracy: {best_accuracy:.4f}, Model saved as 'best_model.pth'")
 
             if self.args.scheduler:
