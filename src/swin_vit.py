@@ -521,7 +521,7 @@ class SwinTransformer(nn.Module):
                  embed_dim=96, depths=[2, 2, 6, 2], num_heads=[3, 6, 12, 24],
                  window_size=7, mlp_ratio=4., qkv_bias=True, qk_scale=None,
                  drop_rate=0.1, attn_drop_rate=0., drop_path_rate=0.,
-                 norm_layer=partial(nn.LayerNorm, eps=1e-6), ape=False, patch_norm=True, 
+                 norm_layer=partial(nn.LayerNorm, eps=1e-6), ape=True, patch_norm=True, 
                  return_all_tokens=False, use_mean_pooling=True, masked_im_modeling=False):
 
         super().__init__()
